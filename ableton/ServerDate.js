@@ -23,7 +23,9 @@ along with ServerDate.  If not, see <http://www.gnu.org/licenses/>.
 
 'use strict';
 
-const fetch = require('node-fetch');
+if (typeof fetch === 'undefined') {
+  var fetch = require('node-fetch');
+}
 
 var timeServer = 'http://localhost:8080/time';
 var values=[];
@@ -191,7 +193,7 @@ function synchronize() {
       // var time = (new Date(this.getResponseHeader("Date"))).getTime();
       var time = parseInt(res.headers.get('X-Date'));
       processSample(time);
-    })
+    }).catch(err => console.error(err));
   }
 
   // Process the time sample received from the server.
@@ -283,3 +285,7 @@ synchronize();
 // Return the newly defined module.
 return ServerDate;
 })(Date.now());
+
+if (typeof module !== 'undefined') {
+  module.exports = ServerDate;
+}

@@ -23,6 +23,10 @@ along with ServerDate.  If not, see <http://www.gnu.org/licenses/>.
 
 'use strict';
 
+if (typeof fetch === 'undefined') {
+  var fetch = require('node-fetch');
+}
+
 var timeServer = './time';
 var values=[];
 var sampleCount = 10;
@@ -39,11 +43,6 @@ var ServerDate = (function(serverNow) {
 var
   // Remember when the script was loaded.
   scriptLoadTime = Date.now(),
-
-  // Remember the URL of this script so we can call it again during
-  // synchronization.
-  scripts = document.getElementsByTagName("script"),
-
   synchronizationIntervalDelay,
   synchronizationInterval,
   precision,
@@ -179,46 +178,22 @@ function synchronize() {
 
   // Request a time sample from the server.
   function requestSample() {
-    var request = new XMLHttpRequest();
-
-    // At the earliest possible moment of the response, record the time at
-    // which we received it.
-    request.onreadystatechange = function() {
-      // If we got the headers and everything's OK
-      if ((this.readyState == this.HEADERS_RECEIVED)
-        && (this.status == 200)) {
-        responseTime = Date.now();
-        // console.log('got response ' + responseTime);
-      }
-    };
-
-    // Process the server's response.
-    request.onload = function() {
-      // If OK
-      if (this.status == 200) {
-        try {
-          // Process the server's Date from the response header
-          // console.log(this.getAllResponseHeaders());
-          // var time = (new Date(this.getResponseHeader("Date"))).getTime();
-          var time = parseInt(this.getResponseHeader("X-Date"));
-          processSample(time);
-          // console.log('got sample ' + time);
-        }
-        catch (exception) {
-          log("Unable to read the server's response.");
-        }
-      }
-    };
 
     // Remember the time at which we sent the request to the server.
     requestTime = Date.now();
 
-    // Ask the server for another copy of ServerDate.js but specify a unique number on the URL querystring
-    // so that we don't get the browser cached Javascript file
-    request.open("HEAD", timeServer + "?noCache=" + Date.now());
+    // Ask the server for the time, but specify a unique number on the URL querystring
+    // so that we don't get a cached value.
+    const url = `${timeServer}?noCache=${Date.now()}`;
+    fetch(url, {method: 'HEAD'}).then(res => {
+      responseTime = Date.now();
 
-    // Send the request.
-    request.send();
+      // Process the server's Date from the response header
+      // console.log(this.getAllResponseHeaders());
+      // var time = (new Date(this.getResponseHeader("Date"))).getTime();
+      var time = parseInt(res.headers.get('X-Date'));
+      processSample(time);
+    }).catch(err => console.error(err));
   }
 
   // Process the time sample received from the server.
@@ -300,7 +275,9 @@ setInterval(function()
 }, 1000);
 
 // Synchronize whenever the page is shown again after losing focus.
-window.addEventListener('pageshow', synchronize);
+if (typeof window !== 'undefined') {
+  window.addEventListener('pageshow', synchronize);
+}
 
 // Start our first synchronization.
 synchronize();
@@ -308,3 +285,7 @@ synchronize();
 // Return the newly defined module.
 return ServerDate;
 })(Date.now());
+
+if (typeof module !== 'undefined') {
+  module.exports = ServerDate;
+}

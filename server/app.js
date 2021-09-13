@@ -7,24 +7,25 @@ const express = require('express');
 const app = express();
 const port = 8080;
 
-let playbackOffset = 0;
-let playbackStatus = 0;
+let transport = {};
 
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.disable('x-powered-by');
 
 app.use(express.static('public'));
 
 app.get('/time', (req, res) => {
     res.append('X-Date', Date.now());
-    res.append('Playback-Offset', playbackOffset);
-    res.append('Playback-Status', playbackStatus);
     res.send();
 })
 
-app.post('/set', (req, res) => {
-    playbackOffset = req.body.playbackOffset;
-    playbackStatus = req.body.playbackStatus;
+app.get('/transport', (req, res) => {
+    res.send(transport);
+})
+
+// this endpoint should be restricted somehow
+app.post('/transport', (req, res) => {
+    transport = req.body;
     res.send();
 });
 

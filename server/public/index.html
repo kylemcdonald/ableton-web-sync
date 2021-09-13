@@ -1,6 +1,9 @@
 <html>
 
 <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="#">
     <script type='text/javascript' src='ServerDate.js'></script>
     <style>
         body {
@@ -12,12 +15,24 @@
 <body id='body'>
     <p id='time'></p>
     <script>
-        let tickTime = 1000;
+        let transport;
+
+        setInterval(() => {
+            fetch('./transport')
+                .then(res => res.json())
+                .then(res => {
+                    transport = res;
+                })
+        }, 1000);
+
         function loop() {
-            let current = ServerDate.now();
-            document.getElementById('time').innerText = current;
-            let color = 255 * ((current / tickTime) % 1);
-            document.getElementById('body').style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
+            if (transport && transport.state) {
+                let tickTime = 1000 * 60 / transport.tempo;
+                let current = ServerDate.now() + transport.offset;
+                document.getElementById('time').innerText = current;
+                let color = 255 * ((current / tickTime) % 1);
+                document.getElementById('body').style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
+            }
             requestAnimationFrame(loop);
         };
         loop();
