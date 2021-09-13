@@ -1,0 +1,27 @@
+<html>
+
+<head>
+    <script type='text/javascript' src='ServerDate.js'></script>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+
+<body id='body'>
+    <p id='time'></p>
+    <script>
+        let tickTime = 1000;
+        function loop() {
+            let current = ServerDate.now();
+            document.getElementById('time').innerText = current;
+            let color = 255 * ((current / tickTime) % 1);
+            document.getElementById('body').style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
+            requestAnimationFrame(loop);
+        };
+        loop();
+    </script>
+</body>
+
+</html>
