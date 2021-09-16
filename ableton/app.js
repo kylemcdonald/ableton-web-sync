@@ -6,18 +6,33 @@ const socket = io('ws://localhost:8080/');
 
 let now = new Date().getTime();
 
+// how many milliseconds between syncing
+const resyncPeriod = 1000;
+
+// how many network delay samples to collect
+const delaySamples = 16;
+
+// how long between the initial samples in milliseconds
+const initialSamplePeriod = 100;
+
 let networkDelays = [];
 let networkDelay = 0.0;
 let localTimeDiff = 0.0;
 
 setInterval(() => {
     socket.emit('time/req', { sent: new Date().getTime() });
-}, 500);
+}, resyncPeriod);
+
+for (let i = 0; i < delaySamples; i++) {
+    setTimeout(() => {
+        socket.emit('time/req', { sent: new Date().getTime() });
+    }, i * initialSamplePeriod);
+}
 
 socket.on('time/res', (data) => {
     const now = new Date().getTime();
     networkDelays.push(now - data.sent);
-    if(16 < networkDelays.length) networkDelays = networkDelays.slice(1);
+    if(delaySamples < networkDelays.length) networkDelays = networkDelays.slice(1);
     networkDelay = networkDelays.reduce((x, y) => x + y, 0.0) / networkDelays.length;
     networkDelay /= 2; // convert round-trip to one-way
     localTimeDiff = data.serverTime - now;

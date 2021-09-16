@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="#">
     <script src="/socket.io/socket.io.js"></script>
+    <!-- <script src="ableton-web-sync.js" type="module"></script> -->
     <style>
         body {
             font-family: sans-serif;
@@ -14,52 +15,35 @@
 
 <body id='body'>
     <dl>
-        <dt>current</dt><dd id='time'></dd>
-        <dt>network delay</dt><dd id='network_delay'></dd>
-        <dt>time diff from server</dt><dd id='time_diff'></dd>
-        <dt>transport</dt><dd id='transport'></dd>
+        <dt>current</dt>
+        <dd id='time'></dd>
+        <dt>network delay</dt>
+        <dd id='network_delay'></dd>
+        <dt>time diff from server</dt>
+        <dd id='time_diff'></dd>
+        <dt>transport</dt>
+        <dd id='transport'></dd>
     </dl>
-    <script>
-        let transport;
+    <script type="module">
+        import { transport, networkDelay, localTimeDiff, getPlaybackTime, startWebSync } from './ableton-web-sync.js';
 
-        const socket = io();
-        let networkDelays = [];
-        let networkDelay = 0.0;
-        let localTimeDiff = 0.0;
-
-        socket.on('transport', (data) => {
-            // console.log('received transport', data.transport.state);
-
-            if (data.sent) {
-                const now = new Date().getTime();
-                networkDelays.push(now - data.sent);
-                if(16 < networkDelays.length) networkDelays = networkDelays.slice(1);
-                networkDelay = networkDelays.reduce((x, y) => x + y, 0.0) / networkDelays.length;
-                networkDelay /= 2; // convert round-trip to one-way
-                localTimeDiff = data.serverTime - now
-            }
-
-            transport = data.transport;
-        });
-
-        setInterval(() => {
-            socket.emit('get', { sent: new Date().getTime() });
-        }, 1000);
+        startWebSync();
 
         function loop() {
             if (transport && transport.state) {
-                const now = (new Date().getTime() + localTimeDiff - networkDelay);
-                const tickTime = 1000 * 60 / transport.tempo;
-                const current = now + transport.offset;
+                const current = getPlaybackTime();
                 document.getElementById('time').innerText = current;
                 document.getElementById('network_delay').innerText = networkDelay;
                 document.getElementById('time_diff').innerText = localTimeDiff;
                 document.getElementById('transport').innerText = `${transport.bars}:${transport.beats}:${transport.units}`;
-                let color = 255 * ((current / tickTime) % 1);
+
+                const beatTime = 1000 * 60 / transport.tempo;
+                const color = 255 * ((current / beatTime) % 1);
                 document.getElementById('body').style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
             }
             requestAnimationFrame(loop);
         };
+        
         loop();
     </script>
 </body>
