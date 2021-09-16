@@ -5,6 +5,9 @@
 
 const express = require('express');
 const app = express();
+const http = require("http");
+const server = http.createServer(app);
+const io   = require("socket.io")(server);
 const port = 8080;
 
 let transport = {};
@@ -14,21 +17,28 @@ app.disable('x-powered-by');
 
 app.use(express.static('public'));
 
-app.get('/time', (req, res) => {
-    res.append('X-Date', Date.now());
-    res.send();
-})
-
-app.get('/transport', (req, res) => {
-    res.send(transport);
-})
-
-// this endpoint should be restricted somehow
-app.post('/transport', (req, res) => {
-    transport = req.body;
-    res.send();
+io.on("connection", (socket) => {
+    console.log("User was connected");
+    // if(transport) socket.emit('transport');
+    socket.on('transport', (data) => {
+        // console.log('received transport', data);
+        transport = data;
+    });
+    socket.on('time/req', ({ sent }) => {
+        socket.emit('time/res', {
+            sent,
+            serverTime: new Date().getTime()
+        });
+    });
+    socket.on('get', ({ sent }) => {
+        socket.emit('transport', {
+            transport,
+            sent,
+            serverTime: new Date().getTime()
+        });
+    });
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`Server listening at http://localhost:${port}`);
-})
+});

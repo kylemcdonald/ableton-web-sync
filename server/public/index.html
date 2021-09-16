@@ -4,6 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="#">
+    <script src="/socket.io/socket.io.js"></script>
     <script type='text/javascript' src='ServerDate.js'></script>
     <style>
         body {
@@ -13,23 +14,44 @@
 </head>
 
 <body id='body'>
-    <p id='time'></p>
+    <dl>
+        <dt>current</dt><dd id='time'></dd>
+        <dt>network delay</dt><dd id='network_delay'></dd>
+        <dt>time diff from server</dt><dd id='time_diff'></dd>
+        <dt>transport</dt><dd id='transport'></dd>
+    </dl>
     <script>
         let transport;
 
+        const socket = io();
+        let networkDelays = [];
+        let networkDelay = 0.0;
+        let localTimeDiff = 0.0;
+
+        socket.on('transport', (data) => {
+            // console.log('received transport', data);
+            const now = new Date().getTime();
+            networkDelays.push((now - data.sent) * 0.5);
+            if(16 < networkDelays.length) networkDelays = networkDelays.slice(1);
+            networkDelay = networkDelays.reduce((x, y) => x + y, 0.0) / networkDelays.length;
+            localTimeDiff = data.serverTime - now;
+
+            transport = data.transport;
+        });
+
         setInterval(() => {
-            fetch('./transport')
-                .then(res => res.json())
-                .then(res => {
-                    transport = res;
-                })
-        }, 1000);
+            socket.emit('get', { sent: new Date().getTime() });
+        }, 100);
 
         function loop() {
             if (transport && transport.state) {
-                let tickTime = 1000 * 60 / transport.tempo;
-                let current = ServerDate.now() + transport.offset;
+                const now = (new Date().getTime() + localTimeDiff - networkDelay);
+                const tickTime = 1000 * 60 / transport.tempo;
+                const current = now + transport.offset;
                 document.getElementById('time').innerText = current;
+                document.getElementById('network_delay').innerText = networkDelay;
+                document.getElementById('time_diff').innerText = localTimeDiff;
+                document.getElementById('transport').innerText = `${transport.bars}:${transport.beats}:${transport.units}`;
                 let color = 255 * ((current / tickTime) % 1);
                 document.getElementById('body').style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
             }
