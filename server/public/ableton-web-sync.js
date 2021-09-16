@@ -43,14 +43,14 @@ function startWebSync() {
 }
 
 function getRemoteTime() {
-    if (transport) {
-        return new Date().getTime() + localTimeDiff - networkDelay;
-    }
-    return 0;
+    return new Date().getTime() + localTimeDiff - networkDelay;
 }
 
 function getPlaybackTime() {
-    return getRemoteTime() + transport.offset;
+    if (transport) {
+        return getRemoteTime() + transport.offset;
+    }
+    return 0;
 }
 
 export { transport, networkDelay, localTimeDiff, getPlaybackTime, startWebSync };
