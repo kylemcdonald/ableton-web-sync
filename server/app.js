@@ -22,13 +22,25 @@ app.get('/time', (req, res) => {
     res.send();
 });
 
-io.on("connection", (socket)=>{
+io.on("connection", (socket) => {
     console.log("User was connected");
-    if(transport) socket.emit('transport');
+    // if(transport) socket.emit('transport');
     socket.on('transport', (data) => {
         // console.log('received transport', data);
         transport = data;
-        io.emit('transport', data);
+    });
+    socket.on('time/req', ({ sent }) => {
+        socket.emit('time/res', {
+            sent: sent,
+            serverTime: new Date().getTime()
+        });
+    });
+    socket.on('get', ({ sent }) => {
+        socket.emit('transport', {
+            transport,
+            sent,
+            serverTime: new Date().getTime()
+        });
     });
 });
 

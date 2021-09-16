@@ -20,15 +20,24 @@
         let transport;
 
         const socket = io();
+        let diffs = [];
+        let diff = 0.0;
         socket.on('transport', (data) => {
             // console.log('received transport', data);
-            transport = data;
+            diffs.push((new Date().getTime() - data.sent) * 0.5);
+            if(16 < diffs.length) diffs = diffs.slice(1);
+            diff = -diffs.reduce((x, y) => x + y, 0.0) / diffs.length;
+            transport = data.transport;
         });
+
+        setInterval(() => {
+            socket.emit('get', { sent: new Date().getTime() });
+        }, 100);
 
         function loop() {
             if (transport && transport.state) {
                 let tickTime = 1000 * 60 / transport.tempo;
-                let current = ServerDate.now() + transport.offset;
+                let current = new Date().getTime() + diff + transport.offset;
                 document.getElementById('time').innerText = current;
                 document.getElementById('transport').innerText = `${transport.bars}:${transport.beats}:${transport.units}`;
                 let color = 255 * ((current / tickTime) % 1);
