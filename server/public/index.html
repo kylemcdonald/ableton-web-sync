@@ -45,8 +45,9 @@
 
         function loop() {
             if (transport && transport.state) {
-                let tickTime = 1000 * 60 / transport.tempo;
-                let current = transport.offset + (new Date().getTime() + localTimeDiff - networkDelay);
+                const now = (new Date().getTime() + localTimeDiff - networkDelay);
+                const tickTime = 1000 * 60 / transport.tempo;
+                const current = now + transport.offset;
                 document.getElementById('time').innerText = current;
                 document.getElementById('network_delay').innerText = networkDelay;
                 document.getElementById('time_diff').innerText = localTimeDiff;

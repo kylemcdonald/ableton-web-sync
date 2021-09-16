@@ -29,8 +29,9 @@ socket.on('time/res', (data) => {
 });
 
 Max.addHandler('transport', (bars, beats, units, resolution, tempo, signatureTop, signatureBottom, state, ticks) => {
+    const now = new Date().getTime() + localTimeDiff + networkDelay;
     const time = 1000. * 60. / (tempo * resolution) * ticks;
-    const offset = time - (new Date().getTime() + localTimeDiff + networkDelay);
+    const offset = time - now;
     const body = {
         bars: bars,
         beats: beats,
