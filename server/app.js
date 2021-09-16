@@ -17,11 +17,6 @@ app.disable('x-powered-by');
 
 app.use(express.static('public'));
 
-app.get('/time', (req, res) => {
-    res.append('X-Date', Date.now());
-    res.send();
-});
-
 io.on("connection", (socket) => {
     console.log("User was connected");
     // if(transport) socket.emit('transport');
@@ -31,7 +26,7 @@ io.on("connection", (socket) => {
     });
     socket.on('time/req', ({ sent }) => {
         socket.emit('time/res', {
-            sent: sent,
+            sent,
             serverTime: new Date().getTime()
         });
     });

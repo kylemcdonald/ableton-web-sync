@@ -14,19 +14,28 @@
 </head>
 
 <body id='body'>
-    <p id='time'></p>
-    <p id='transport'></p>
+    <dl>
+        <dt>current</dt><dd id='time'></dd>
+        <dt>network delay</dt><dd id='network_delay'></dd>
+        <dt>time diff from server</dt><dd id='time_diff'></dd>
+        <dt>transport</dt><dd id='transport'></dd>
+    </dl>
     <script>
         let transport;
 
         const socket = io();
-        let diffs = [];
-        let diff = 0.0;
+        let networkDelays = [];
+        let networkDelay = 0.0;
+        let localTimeDiff = 0.0;
+
         socket.on('transport', (data) => {
             // console.log('received transport', data);
-            diffs.push((new Date().getTime() - data.sent) * 0.5);
-            if(16 < diffs.length) diffs = diffs.slice(1);
-            diff = -diffs.reduce((x, y) => x + y, 0.0) / diffs.length;
+            const now = new Date().getTime();
+            networkDelays.push((now - data.sent) * 0.5);
+            if(16 < networkDelays.length) networkDelays = networkDelays.slice(1);
+            networkDelay = networkDelays.reduce((x, y) => x + y, 0.0) / networkDelays.length;
+            localTimeDiff = data.serverTime - now;
+
             transport = data.transport;
         });
 
@@ -37,8 +46,10 @@
         function loop() {
             if (transport && transport.state) {
                 let tickTime = 1000 * 60 / transport.tempo;
-                let current = new Date().getTime() + diff + transport.offset;
+                let current = transport.offset + (new Date().getTime() + localTimeDiff - networkDelay);
                 document.getElementById('time').innerText = current;
+                document.getElementById('network_delay').innerText = networkDelay;
+                document.getElementById('time_diff').innerText = localTimeDiff;
                 document.getElementById('transport').innerText = `${transport.bars}:${transport.beats}:${transport.units}`;
                 let color = 255 * ((current / tickTime) % 1);
                 document.getElementById('body').style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
