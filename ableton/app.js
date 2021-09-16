@@ -1,10 +1,9 @@
 const Max = require('max-api');
 const path = require('path');
+const process = require('process');
 
 const io = require('socket.io-client')
 const socket = io('ws://localhost:8080/');
-
-let now = new Date().getTime();
 
 // how many milliseconds between syncing
 const resyncPeriod = 1000;
@@ -19,18 +18,22 @@ let networkDelays = [];
 let networkDelay = 0.0;
 let localTimeDiff = 0.0;
 
+function milliseconds() {
+    return Number(process.hrtime.bigint() / BigInt(1e6));
+}
+
 setInterval(() => {
-    socket.emit('time/req', { sent: new Date().getTime() });
+    socket.emit('time/req', { sent: milliseconds() });
 }, resyncPeriod);
 
 for (let i = 0; i < delaySamples; i++) {
     setTimeout(() => {
-        socket.emit('time/req', { sent: new Date().getTime() });
+        socket.emit('time/req', { sent: milliseconds() });
     }, i * initialSamplePeriod);
 }
 
 socket.on('time/res', (data) => {
-    const now = new Date().getTime();
+    const now = milliseconds();
     networkDelays.push(now - data.sent);
     if(delaySamples < networkDelays.length) networkDelays = networkDelays.slice(1);
     networkDelay = networkDelays.reduce((x, y) => x + y, 0.0) / networkDelays.length;
@@ -42,7 +45,7 @@ socket.on('time/res', (data) => {
 // to get higher accuracy, it may be possible to look at the
 // earliest (smallest) offset over 10 or so calls
 Max.addHandler('transport', (bars, beats, units, resolution, tempo, signatureTop, signatureBottom, state, ticks) => {
-    const now = new Date().getTime() + localTimeDiff + networkDelay;
+    const now = milliseconds() + localTimeDiff + networkDelay;
     const time = 1000. * 60. / (tempo * resolution) * ticks;
     const offset = time - now;
     const body = {

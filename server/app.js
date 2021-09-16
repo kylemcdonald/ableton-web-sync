@@ -1,8 +1,8 @@
 // this code runs on a remote server
 // separate code runs inside node for max
-// syncs with this code using ServerDate
-// and updates the server via /set
+// syncs with this code using websockets
 
+const process = require('process');
 const express = require('express');
 const app = express();
 const http = require('http');
@@ -13,6 +13,10 @@ const port = 8080;
 let transport = {};
 
 app.use(express.static('public'));
+
+function milliseconds() {
+    return Number(process.hrtime.bigint() / BigInt(1e6));
+}
 
 io.on('connection', (socket) => {
     console.log('websocket connection');
@@ -26,14 +30,14 @@ io.on('connection', (socket) => {
     socket.on('time/req', ({ sent }) => {
         socket.emit('time/res', {
             sent,
-            serverTime: new Date().getTime()
+            serverTime: milliseconds()
         });
     });
     socket.on('get', ({ sent }) => {
         socket.emit('transport', {
             transport,
             sent,
-            serverTime: new Date().getTime()
+            serverTime: milliseconds()
         });
     });
 });

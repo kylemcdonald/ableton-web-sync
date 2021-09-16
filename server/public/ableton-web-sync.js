@@ -11,6 +11,10 @@ let transport;
 let networkDelay = 0.0;
 let localTimeDiff = 0.0;
 
+function milliseconds() {
+    return performance.now();
+}
+
 function startWebSync() {
     const socket = io();
     let networkDelays = [];
@@ -18,7 +22,7 @@ function startWebSync() {
         // console.log('received transport', data.transport.state);
 
         if (data.sent) {
-            const now = new Date().getTime();
+            const now = milliseconds();
             const diff = now - data.sent;
             networkDelays.push(diff);
             // console.log('network delay sample: ' + diff);
@@ -33,17 +37,17 @@ function startWebSync() {
 
     for (let i = 0; i < delaySamples; i++) {
         setTimeout(() => {
-            socket.emit('time/req', { sent: new Date().getTime() });
+            socket.emit('time/req', { sent: milliseconds() });
         }, i * initialSamplePeriod);
     }
 
     setInterval(() => {
-        socket.emit('get', { sent: new Date().getTime() });
+        socket.emit('get', { sent: milliseconds() });
     }, resyncPeriod);
 }
 
 function getRemoteTime() {
-    return new Date().getTime() + localTimeDiff - networkDelay;
+    return milliseconds() + localTimeDiff - networkDelay;
 }
 
 function getPlaybackTime() {
