@@ -4,6 +4,7 @@
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="#">
+    <script src="/socket.io/socket.io.js"></script>
     <script type='text/javascript' src='ServerDate.js'></script>
     <style>
         body {
@@ -14,22 +15,22 @@
 
 <body id='body'>
     <p id='time'></p>
+    <p id='transport'></p>
     <script>
         let transport;
 
-        setInterval(() => {
-            fetch('./transport')
-                .then(res => res.json())
-                .then(res => {
-                    transport = res;
-                })
-        }, 1000);
+        const socket = io();
+        socket.on('transport', (data) => {
+            // console.log('received transport', data);
+            transport = data;
+        });
 
         function loop() {
             if (transport && transport.state) {
                 let tickTime = 1000 * 60 / transport.tempo;
                 let current = ServerDate.now() + transport.offset;
                 document.getElementById('time').innerText = current;
+                document.getElementById('transport').innerText = `${transport.bars}:${transport.beats}:${transport.units}`;
                 let color = 255 * ((current / tickTime) % 1);
                 document.getElementById('body').style.backgroundColor = `rgb(${color}, ${color}, ${color})`;
             }
