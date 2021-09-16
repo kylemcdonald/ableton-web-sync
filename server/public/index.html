@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="#">
     <script src="/socket.io/socket.io.js"></script>
-    <script type='text/javascript' src='ServerDate.js'></script>
     <style>
         body {
             font-family: sans-serif;
@@ -29,19 +28,23 @@
         let localTimeDiff = 0.0;
 
         socket.on('transport', (data) => {
-            // console.log('received transport', data);
-            const now = new Date().getTime();
-            networkDelays.push((now - data.sent) * 0.5);
-            if(16 < networkDelays.length) networkDelays = networkDelays.slice(1);
-            networkDelay = networkDelays.reduce((x, y) => x + y, 0.0) / networkDelays.length;
-            localTimeDiff = data.serverTime - now;
+            // console.log('received transport', data.transport.state);
+
+            if (data.sent) {
+                const now = new Date().getTime();
+                networkDelays.push(now - data.sent);
+                if(16 < networkDelays.length) networkDelays = networkDelays.slice(1);
+                networkDelay = networkDelays.reduce((x, y) => x + y, 0.0) / networkDelays.length;
+                networkDelay /= 2; // convert round-trip to one-way
+                localTimeDiff = data.serverTime - now
+            }
 
             transport = data.transport;
         });
 
         setInterval(() => {
             socket.emit('get', { sent: new Date().getTime() });
-        }, 100);
+        }, 1000);
 
         function loop() {
             if (transport && transport.state) {

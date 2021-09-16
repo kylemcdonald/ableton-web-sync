@@ -1,14 +1,8 @@
 const Max = require('max-api');
 const path = require('path');
 
-// const ServerDate = require('./ServerDate.js');
-// const timeServer = 'http://localhost:8080/transport';
 const io = require('socket.io-client')
 const socket = io('ws://localhost:8080/');
-
-// there is around +/- 5 ms of jitter in triggering this handler,
-// to get higher accuracy, it may be possible to look at the
-// earliest (smallest) offset over 10 or so calls
 
 let now = new Date().getTime();
 
@@ -22,12 +16,16 @@ setInterval(() => {
 
 socket.on('time/res', (data) => {
     const now = new Date().getTime();
-    networkDelays.push((now - data.sent) * 0.5);
+    networkDelays.push(now - data.sent);
     if(16 < networkDelays.length) networkDelays = networkDelays.slice(1);
     networkDelay = networkDelays.reduce((x, y) => x + y, 0.0) / networkDelays.length;
+    networkDelay /= 2; // convert round-trip to one-way
     localTimeDiff = data.serverTime - now;
 });
 
+// there is around +/- 5 ms of jitter in triggering this handler,
+// to get higher accuracy, it may be possible to look at the
+// earliest (smallest) offset over 10 or so calls
 Max.addHandler('transport', (bars, beats, units, resolution, tempo, signatureTop, signatureBottom, state, ticks) => {
     const now = new Date().getTime() + localTimeDiff + networkDelay;
     const time = 1000. * 60. / (tempo * resolution) * ticks;
