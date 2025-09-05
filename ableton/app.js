@@ -3,7 +3,8 @@ const path = require('path');
 const process = require('process');
 
 const io = require('socket.io-client')
-const socket = io('ws://localhost:8080/');
+//const socket = io('ws://localhost:8080/');
+const socket = io('wss://siren.kylemcdonald.net/');
 
 // how many milliseconds between syncing
 const resyncPeriod = 1000;

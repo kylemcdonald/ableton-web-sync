@@ -12,7 +12,7 @@ const port = 8080;
 
 let transport = {};
 
-app.use(express.static('public'));
+app.use(express.static('siren'));
 
 function milliseconds() {
     return Number(process.hrtime.bigint() / BigInt(1e6));

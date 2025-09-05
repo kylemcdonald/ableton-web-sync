@@ -1,0 +1,50 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="#">
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: black;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        a {
+            color:white;
+        }
+        p,h1,h2 {
+            margin: 0 5vw;
+            padding: 0;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.js"></script>
+    <script src="sketch.js" type="module"></script>
+
+    <script>
+        // var transport;
+
+        // setInterval(() => {
+        //     fetch('./transport')
+        //         .then(res => res.json())
+        //         .then(res => {
+        //             // only update if different enough
+        //             // to avoid any kind of frame skips?
+        //             transport = res;
+        //         })
+        // }, 1000);
+    </script>
+</head>
+
+<body id='body'>
+    <div id="container"></div>
+    <h1>Siren</h1>
+    <!-- <h2>by Annie Lewandowski and Kyle McDonald</h2> -->
+    <p>Like us, humpbacks sing. Each song contains a variety of notelike units that are organized into repeating groups, called phrases. Phrases of one kind are grouped together to create themes. These themes, numbering under ten, are sung in an unvarying order that then repeats, often without pause, for hours on end. Over time and across seasons, all elements in the song of a humpback whale population change through the process of social learning, with singers within the population contributing to the changing song. This is an incredible example of not only horizontal cultural transmission, but also of the creative mind at work in another species.</p>
+    <p id='time'></p>
+</body>
+
+</html>
